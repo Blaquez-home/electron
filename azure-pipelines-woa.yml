@@ -54,6 +54,16 @@ steps:
     APPVEYOR_TOKEN: $(APPVEYOR_TOKEN)
 
 - powershell: |
+    $localArtifactPath = "$pwd\src\pdb.zip"
+    $serverArtifactPath = "$env:APPVEYOR_URL/buildjobs/$env:APPVEYOR_JOB_ID/artifacts/pdb.zip"
+    Invoke-RestMethod -Method Get -Uri $serverArtifactPath -OutFile $localArtifactPath -Headers @{ "Authorization" = "Bearer $env:APPVEYOR_TOKEN" }
+    cd src
+    & "${env:ProgramFiles(x86)}\7-Zip\7z.exe" x -y pdb.zip
+  displayName: 'Download pdb files for detailed stacktraces'
+  env:
+    APPVEYOR_TOKEN: $(APPVEYOR_TOKEN)
+
+- powershell: |
     New-Item src\out\Default\gen\node_headers\Release -Type directory
     Copy-Item -path src\out\Default\electron.lib -destination src\out\Default\gen\node_headers\Release\node.lib
   displayName: 'Setup node headers'
