@@ -63,68 +63,7 @@ steps:
     set npm_config_nodedir=%cd%\out\Default\gen\node_headers
     set npm_config_arch=arm64
     cd electron
-    # Use the spec runner to prepare for testing   
-    node script/yarn test --onlyPrepForRunning    
-    cd ..
-    # CalculateNativeWinOcclusion is disabled due to https://bugs.chromium.org/p/chromium/issues/detail?id=1139022
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-app-spec.ts --disable-features=CalculateNativeWinOcclusion
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-auto-updater-spec.ts --disable-features=CalculateNativeWinOcclusion
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-autoupdater-darwin-spec.ts --disable-features=CalculateNativeWinOcclusion
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-browser-view-spec.ts --disable-features=CalculateNativeWinOcclusion
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-browser-window-spec.ts --disable-features=CalculateNativeWinOcclusion
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-content-tracing-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-context-bridge-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-crash-reporter-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-debugger-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-deprecate-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-desktop-capturer-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-dialog-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-global-shortcut-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-in-app-purchase-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-ipc-main-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-ipc-renderer-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-ipc-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-menu-item-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-menu-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-native-theme-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-net-log-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-net-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-notification-dbus-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-notification-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-power-monitor-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-power-save-blocker-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-protocol-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-screen-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-service-workers-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-session-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-shell-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-subframe-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-system-preferences-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-touch-bar-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-tray-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-view-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-web-contents-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-web-contents-view-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-web-frame-main-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-web-frame-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\api-web-request-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\asar-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\autofill-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\chromium-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\crash-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\extensions-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\guest-window-manager-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\internal-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\logging-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\modules-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\node-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\release-notes-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\security-warnings-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\spellchecker-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\types-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\version-bump-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\visibility-state-spec.ts --disable-features=CalculateNativeWinOcclusion 
-    out\Default\electron.exe electron\spec-main --trace-uncaught --enable-logging --files spec-main\webview-spec.ts --disable-features=CalculateNativeWinOcclusion
+    node script/yarn test --runners=main --runTestFilesSeperately --enable-logging --disable-features=CalculateNativeWinOcclusion
   displayName: 'Run Electron Main process tests'
   env:
     ELECTRON_ENABLE_STACK_DUMPING: true
@@ -138,7 +77,7 @@ steps:
     cd src
     set npm_config_nodedir=%cd%\out\Default\gen\node_headers
     set npm_config_arch=arm64
-    out\Default\electron.exe electron\spec --enable-logging --disable-features=CalculateNativeWinOcclusion
+    node script/yarn test --runners=remote --runTestFilesSeperately --enable-logging --disable-features=CalculateNativeWinOcclusion
   displayName: 'Run Electron Remote based tests'
   env:
     ELECTRON_OUT_DIR: Default
