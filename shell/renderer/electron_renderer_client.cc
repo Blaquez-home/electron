@@ -158,9 +158,8 @@ void ElectronRendererClient::WillReleaseScriptContext(
   // We also do this if we have disable electron site instance overrides to
   // avoid memory leaks
   auto prefs = render_frame->GetBlinkPreferences();
-  v8::Isolate* isolate = v8::Isolate::GetCurrent();
   gin_helper::MicrotasksScope microtasks_scope(
-      isolate, v8::MicrotasksScope::kDoNotRunMicrotasks);
+      env->isolate(), v8::MicrotasksScope::kDoNotRunMicrotasks);
   node::FreeEnvironment(env);
   if (env == node_bindings_->uv_env())
     node::FreeIsolateData(node_bindings_->isolate_data());
