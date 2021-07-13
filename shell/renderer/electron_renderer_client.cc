@@ -13,7 +13,6 @@
 #include "shell/common/api/electron_bindings.h"
 #include "shell/common/gin_helper/dictionary.h"
 #include "shell/common/gin_helper/event_emitter_caller.h"
-#include "shell/common/gin_helper/microtasks_scope.h"
 #include "shell/common/node_bindings.h"
 #include "shell/common/node_includes.h"
 #include "shell/common/options_switches.h"
@@ -158,8 +157,6 @@ void ElectronRendererClient::WillReleaseScriptContext(
   // We also do this if we have disable electron site instance overrides to
   // avoid memory leaks
   auto prefs = render_frame->GetBlinkPreferences();
-  gin_helper::MicrotasksScope microtasks_scope(
-      env->isolate(), v8::MicrotasksScope::kDoNotRunMicrotasks);
   node::FreeEnvironment(env);
   if (env == node_bindings_->uv_env())
     node::FreeIsolateData(node_bindings_->isolate_data());
