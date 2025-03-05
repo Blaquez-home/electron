@@ -6,7 +6,6 @@
 
 #include <string>
 
-#include "base/task/post_task.h"
 #include "content/public/browser/browser_task_traits.h"
 #include "content/public/browser/browser_thread.h"
 #include "gin/handle.h"
@@ -14,12 +13,9 @@
 #include "shell/common/gin_helper/dictionary.h"
 #include "shell/common/gin_helper/object_template_builder.h"
 #include "shell/common/node_includes.h"
-#include "ui/gfx/color_utils.h"
 #include "ui/native_theme/native_theme.h"
 
-namespace electron {
-
-namespace api {
+namespace electron::api {
 
 gin::WrapperInfo NativeTheme::kWrapperInfo = {gin::kEmbedderNativeGin};
 
@@ -39,8 +35,8 @@ void NativeTheme::OnNativeThemeUpdatedOnUI() {
 }
 
 void NativeTheme::OnNativeThemeUpdated(ui::NativeTheme* theme) {
-  base::PostTask(FROM_HERE, {content::BrowserThread::UI},
-                 base::BindOnce(&NativeTheme::OnNativeThemeUpdatedOnUI,
+  content::GetUIThreadTaskRunner({})->PostTask(
+      FROM_HERE, base::BindOnce(&NativeTheme::OnNativeThemeUpdatedOnUI,
                                 base::Unretained(this)));
 }
 
@@ -65,6 +61,14 @@ bool NativeTheme::ShouldUseDarkColors() {
 
 bool NativeTheme::ShouldUseHighContrastColors() {
   return ui_theme_->UserHasContrastPreference();
+}
+
+bool NativeTheme::InForcedColorsMode() {
+  return ui_theme_->InForcedColorsMode();
+}
+
+bool NativeTheme::GetPrefersReducedTransparency() {
+  return ui_theme_->GetPrefersReducedTransparency();
 }
 
 #if BUILDFLAG(IS_MAC)
@@ -106,16 +110,17 @@ gin::ObjectTemplateBuilder NativeTheme::GetObjectTemplateBuilder(
       .SetProperty("shouldUseHighContrastColors",
                    &NativeTheme::ShouldUseHighContrastColors)
       .SetProperty("shouldUseInvertedColorScheme",
-                   &NativeTheme::ShouldUseInvertedColorScheme);
+                   &NativeTheme::ShouldUseInvertedColorScheme)
+      .SetProperty("inForcedColorsMode", &NativeTheme::InForcedColorsMode)
+      .SetProperty("prefersReducedTransparency",
+                   &NativeTheme::GetPrefersReducedTransparency);
 }
 
 const char* NativeTheme::GetTypeName() {
   return "NativeTheme";
 }
 
-}  // namespace api
-
-}  // namespace electron
+}  // namespace electron::api
 
 namespace {
 
@@ -170,4 +175,4 @@ bool Converter<ui::NativeTheme::ThemeSource>::FromV8(
 
 }  // namespace gin
 
-NODE_LINKED_MODULE_CONTEXT_AWARE(electron_common_native_theme, Initialize)
+NODE_LINKED_BINDING_CONTEXT_AWARE(electron_browser_native_theme, Initialize)

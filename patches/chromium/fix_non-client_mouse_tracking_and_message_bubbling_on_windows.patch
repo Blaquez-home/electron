@@ -13,10 +13,10 @@ messages in the legacy window handle layer.
 These conditions are regularly hit with WCO-enabled windows on Windows.
 
 diff --git a/content/browser/renderer_host/legacy_render_widget_host_win.cc b/content/browser/renderer_host/legacy_render_widget_host_win.cc
-index 4a894ef70eeb1d8489049aef552c9bae4f24ae62..f5049d730a850f2947023f976b25fb772e42107a 100644
+index e63c2f637828d426e1c8fb16774a08722bfc9fcc..bfc5254ec692fc5cfbd93fabae7969adeb644393 100644
 --- a/content/browser/renderer_host/legacy_render_widget_host_win.cc
 +++ b/content/browser/renderer_host/legacy_render_widget_host_win.cc
-@@ -288,12 +288,12 @@ LRESULT LegacyRenderWidgetHostHWND::OnMouseRange(UINT message,
+@@ -325,12 +325,12 @@ LRESULT LegacyRenderWidgetHostHWND::OnMouseRange(UINT message,
                                                   WPARAM w_param,
                                                   LPARAM l_param,
                                                   BOOL& handled) {
@@ -31,30 +31,26 @@ index 4a894ef70eeb1d8489049aef552c9bae4f24ae62..f5049d730a850f2947023f976b25fb77
        tme.hwndTrack = hwnd();
        tme.dwHoverTime = 0;
        TrackMouseEvent(&tme);
-@@ -319,12 +319,11 @@ LRESULT LegacyRenderWidgetHostHWND::OnMouseRange(UINT message,
-         message, w_param, l_param, &msg_handled);
-     handled = msg_handled;
-     // If the parent did not handle non client mouse messages, we call
--    // DefWindowProc on the message with the parent window handle. This
--    // ensures that WM_SYSCOMMAND is generated for the parent and we are
--    // out of the picture.
-+    // DefWindowProc on the message. This ensures that WM_SYSCOMMAND is
-+    // generated.
+@@ -361,7 +361,10 @@ LRESULT LegacyRenderWidgetHostHWND::OnMouseRange(UINT message,
+     // out of the picture.
      if (!handled &&
-          (message >= WM_NCMOUSEMOVE && message <= WM_NCXBUTTONDBLCLK)) {
+         (message >= WM_NCMOUSEMOVE && message <= WM_NCXBUTTONDBLCLK)) {
 -      ret = ::DefWindowProc(GetParent(), message, w_param, l_param);
-+      ret = ::DefWindowProc(hwnd(), message, w_param, l_param);
++      // Send WM_NCMOUSEMOVE messages using the LegacyRenderWidgetHostHWND's
++      // handle so mouse tracking on non-client areas doesn't break.
++      HWND target = message == WM_NCMOUSEMOVE ? hwnd() : GetParent();
++      ret = ::DefWindowProc(target, message, w_param, l_param);
        handled = TRUE;
      }
    }
 diff --git a/content/browser/renderer_host/legacy_render_widget_host_win.h b/content/browser/renderer_host/legacy_render_widget_host_win.h
-index 79dffd981f4d461f30bd3796cfba1457eda3a89d..ae378ce95f90989fd0e74c38b57f5f7dc0a1ee29 100644
+index aad10a91356b8b13e15fac0488d25187af23ce36..f9a3db0c54831ad0a1c9946a98a6d7154776ae51 100644
 --- a/content/browser/renderer_host/legacy_render_widget_host_win.h
 +++ b/content/browser/renderer_host/legacy_render_widget_host_win.h
-@@ -105,6 +105,7 @@ class CONTENT_EXPORT LegacyRenderWidgetHostHWND
+@@ -103,6 +103,7 @@ class CONTENT_EXPORT LegacyRenderWidgetHostHWND
+     MESSAGE_HANDLER_EX(WM_VSCROLL, OnScroll)
      MESSAGE_HANDLER_EX(WM_NCHITTEST, OnNCHitTest)
-     MESSAGE_RANGE_HANDLER(WM_NCMOUSEMOVE, WM_NCXBUTTONDBLCLK,
-                           OnMouseRange)
+     MESSAGE_RANGE_HANDLER(WM_NCMOUSEMOVE, WM_NCXBUTTONDBLCLK, OnMouseRange)
 +    MESSAGE_HANDLER_EX(WM_NCMOUSELEAVE, OnMouseLeave)
      MESSAGE_HANDLER_EX(WM_NCCALCSIZE, OnNCCalcSize)
      MESSAGE_HANDLER_EX(WM_SIZE, OnSize)

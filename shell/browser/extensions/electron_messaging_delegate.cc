@@ -7,14 +7,14 @@
 #include <memory>
 #include <utility>
 
-#include "base/callback.h"
-#include "base/logging.h"
-#include "build/build_config.h"
+#include "base/functional/callback.h"
+#include "base/values.h"
 #include "components/prefs/pref_service.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/web_contents.h"
+#include "electron/shell/common/extensions/api/tabs.h"
 #include "extensions/browser/api/messaging/extension_message_port.h"
 #include "extensions/browser/api/messaging/native_message_host.h"
 #include "extensions/browser/extension_api_frame_id_map.h"
@@ -39,25 +39,20 @@ ElectronMessagingDelegate::IsNativeMessagingHostAllowed(
   return PolicyPermission::DISALLOW;
 }
 
-std::unique_ptr<base::DictionaryValue>
-ElectronMessagingDelegate::MaybeGetTabInfo(content::WebContents* web_contents) {
+std::optional<base::Value::Dict> ElectronMessagingDelegate::MaybeGetTabInfo(
+    content::WebContents* web_contents) {
   if (web_contents) {
     auto* api_contents = electron::api::WebContents::From(web_contents);
     if (api_contents) {
-      auto tab = std::make_unique<base::DictionaryValue>();
-      tab->SetWithoutPathExpansion(
-          "id", std::make_unique<base::Value>(api_contents->ID()));
-      tab->SetWithoutPathExpansion(
-          "url", std::make_unique<base::Value>(api_contents->GetURL().spec()));
-      tab->SetWithoutPathExpansion(
-          "title", std::make_unique<base::Value>(api_contents->GetTitle()));
-      tab->SetWithoutPathExpansion(
-          "audible",
-          std::make_unique<base::Value>(api_contents->IsCurrentlyAudible()));
-      return tab;
+      api::tabs::Tab tab;
+      tab.id = api_contents->ID();
+      tab.url = api_contents->GetURL().spec();
+      tab.title = base::UTF16ToUTF8(api_contents->GetTitle());
+      tab.audible = api_contents->IsCurrentlyAudible();
+      return tab.ToValue();
     }
   }
-  return nullptr;
+  return std::nullopt;
 }
 
 content::WebContents* ElectronMessagingDelegate::GetWebContentsByTabId(
@@ -75,19 +70,46 @@ std::unique_ptr<MessagePort> ElectronMessagingDelegate::CreateReceiverForTab(
     const std::string& extension_id,
     const PortId& receiver_port_id,
     content::WebContents* receiver_contents,
-    int receiver_frame_id) {
+    int receiver_frame_id,
+    const std::string& receiver_document_id) {
   // Frame ID -1 is every frame in the tab.
-  bool include_child_frames = receiver_frame_id == -1;
-  content::RenderFrameHost* receiver_rfh =
-      include_child_frames ? receiver_contents->GetMainFrame()
-                           : ExtensionApiFrameIdMap::GetRenderFrameHostById(
-                                 receiver_contents, receiver_frame_id);
+  bool include_child_frames =
+      receiver_frame_id == -1 && receiver_document_id.empty();
+
+  content::RenderFrameHost* receiver_rfh = nullptr;
+  if (include_child_frames) {
+    // The target is the active outermost main frame of the WebContents.
+    receiver_rfh = receiver_contents->GetPrimaryMainFrame();
+  } else if (!receiver_document_id.empty()) {
+    ExtensionApiFrameIdMap::DocumentId document_id =
+        ExtensionApiFrameIdMap::DocumentIdFromString(receiver_document_id);
+
+    // Return early for invalid documentIds.
+    if (!document_id)
+      return nullptr;
+
+    receiver_rfh =
+        ExtensionApiFrameIdMap::Get()->GetRenderFrameHostByDocumentId(
+            document_id);
+
+    // If both |document_id| and |receiver_frame_id| are provided they
+    // should find the same RenderFrameHost, if not return early.
+    if (receiver_frame_id != -1 &&
+        ExtensionApiFrameIdMap::GetRenderFrameHostById(
+            receiver_contents, receiver_frame_id) != receiver_rfh) {
+      return nullptr;
+    }
+  } else {
+    DCHECK_GT(receiver_frame_id, -1);
+    receiver_rfh = ExtensionApiFrameIdMap::GetRenderFrameHostById(
+        receiver_contents, receiver_frame_id);
+  }
   if (!receiver_rfh)
     return nullptr;
 
-  return std::make_unique<ExtensionMessagePort>(
-      channel_delegate, receiver_port_id, extension_id, receiver_rfh,
-      include_child_frames);
+  return ExtensionMessagePort::CreateForTab(channel_delegate, receiver_port_id,
+                                            extension_id, receiver_rfh,
+                                            include_child_frames);
 }
 
 std::unique_ptr<MessagePort>

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import argparse
 import hashlib
@@ -10,8 +10,7 @@ import tempfile
 sys.path.append(
   os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + "/../.."))
 
-from lib.config import s3_config
-from lib.util import download, rm_rf, s3put, safe_mkdir
+from lib.util import download, rm_rf, store_artifact, safe_mkdir
 
 DIST_URL = 'https://electronjs.org/headers/'
 
@@ -30,9 +29,8 @@ def main():
   ]
 
   if args.target_dir is None:
-    bucket, access_key, secret_key = s3_config()
-    s3put(bucket, access_key, secret_key, directory,
-          'atom-shell/dist/{0}'.format(args.version), checksums)
+    store_artifact(directory, f'headers/dist/{args.version}',
+                   checksums)
   else:
     copy_files(checksums, args.target_dir)
 
@@ -53,10 +51,10 @@ def parse_args():
 
 def get_files_list(version):
   return [
-    { "filename": 'node-{0}.tar.gz'.format(version), "required": True },
-    { "filename": 'node-{0}-headers.tar.gz'.format(version), "required": True },
-    { "filename": 'iojs-{0}.tar.gz'.format(version), "required": True },
-    { "filename": 'iojs-{0}-headers.tar.gz'.format(version), "required": True },
+    { "filename": f'node-{version}.tar.gz', "required": True },
+    { "filename": f'node-{version}-headers.tar.gz', "required": True },
+    { "filename": f'iojs-{version}.tar.gz', "required": True },
+    { "filename": f'iojs-{version}-headers.tar.gz', "required": True },
     { "filename": 'node.lib', "required": False },
     { "filename": 'x64/node.lib', "required": False },
     { "filename": 'win-x86/iojs.lib', "required": False },
@@ -93,8 +91,8 @@ def create_checksum(algorithm, directory, filename, files):
       lines.append(h.hexdigest() + '  ' + os.path.relpath(path, directory))
 
   checksum_file = os.path.join(directory, filename)
-  with open(checksum_file, 'w') as f:
-    f.write('\n'.join(lines) + '\n')
+  with open(checksum_file, 'w', encoding='utf-8') as fout:
+    fout.write('\n'.join(lines) + '\n')
   return checksum_file
 
 def copy_files(source_files, output_dir):

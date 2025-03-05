@@ -10,22 +10,30 @@
 #include <vector>
 
 #include "base/memory/weak_ptr.h"
+#include "base/scoped_observation.h"
 #include "content/public/browser/global_routing_id.h"
 #include "content/public/browser/hid_chooser.h"
-#include "content/public/browser/web_contents.h"
+#include "content/public/browser/weak_document_ptr.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "services/device/public/mojom/hid.mojom-forward.h"
-#include "shell/browser/api/electron_api_session.h"
-#include "shell/browser/hid/electron_hid_delegate.h"
 #include "shell/browser/hid/hid_chooser_context.h"
 #include "shell/common/gin_converters/frame_converter.h"
-#include "third_party/blink/public/mojom/hid/hid.mojom.h"
+#include "third_party/blink/public/mojom/devtools/console_message.mojom-forward.h"
+#include "third_party/blink/public/mojom/hid/hid.mojom-forward.h"
 
 namespace content {
 class RenderFrameHost;
+class WebContents;
 }  // namespace content
 
+namespace gin {
+class Arguments;
+}
+
 namespace electron {
+namespace api {
+class Session;
+}
 
 class ElectronHidDelegate;
 
@@ -33,8 +41,8 @@ class HidChooserContext;
 
 // HidChooserController provides data for the WebHID API permission prompt.
 class HidChooserController
-    : public content::WebContentsObserver,
-      public electron::HidChooserContext::DeviceObserver {
+    : private content::WebContentsObserver,
+      private electron::HidChooserContext::DeviceObserver {
  public:
   // Construct a chooser controller for Human Interface Devices (HID).
   // |render_frame_host| is used to initialize the chooser strings and to access
@@ -42,14 +50,20 @@ class HidChooserController
   // is closed, either by selecting an item or by dismissing the chooser dialog.
   // The callback is called with the selected device, or nullptr if no device is
   // selected.
-  HidChooserController(content::RenderFrameHost* render_frame_host,
-                       std::vector<blink::mojom::HidDeviceFilterPtr> filters,
-                       content::HidChooser::Callback callback,
-                       content::WebContents* web_contents,
-                       base::WeakPtr<ElectronHidDelegate> hid_delegate);
+  HidChooserController(
+      content::RenderFrameHost* render_frame_host,
+      std::vector<blink::mojom::HidDeviceFilterPtr> filters,
+      std::vector<blink::mojom::HidDeviceFilterPtr> exclusion_filters,
+      content::HidChooser::Callback callback,
+      content::WebContents* web_contents,
+      base::WeakPtr<ElectronHidDelegate> hid_delegate);
   HidChooserController(HidChooserController&) = delete;
   HidChooserController& operator=(HidChooserController&) = delete;
   ~HidChooserController() override;
+
+  // static
+  static const std::string& PhysicalDeviceIdFromDeviceInfo(
+      const device::mojom::HidDeviceInfo& device);
 
   // HidChooserContext::DeviceObserver:
   void OnDeviceAdded(const device::mojom::HidDeviceInfo& device_info) override;
@@ -68,6 +82,9 @@ class HidChooserController
   void OnGotDevices(std::vector<device::mojom::HidDeviceInfoPtr> devices);
   bool DisplayDevice(const device::mojom::HidDeviceInfo& device) const;
   bool FilterMatchesAny(const device::mojom::HidDeviceInfo& device) const;
+  bool IsExcluded(const device::mojom::HidDeviceInfo& device) const;
+  void AddMessageToConsole(blink::mojom::ConsoleMessageLevel level,
+                           const std::string& message) const;
 
   // Add |device_info| to |device_map_|. The device is added to the chooser item
   // representing the physical device. If the chooser item does not yet exist, a
@@ -88,9 +105,10 @@ class HidChooserController
   void OnDeviceChosen(gin::Arguments* args);
 
   std::vector<blink::mojom::HidDeviceFilterPtr> filters_;
+  std::vector<blink::mojom::HidDeviceFilterPtr> exclusion_filters_;
   content::HidChooser::Callback callback_;
+  content::WeakDocumentPtr initiator_document_;
   const url::Origin origin_;
-  const int frame_tree_node_id_;
 
   // The lifetime of the chooser context is tied to the browser context used to
   // create it, and may be destroyed while the chooser is still active.
@@ -107,10 +125,7 @@ class HidChooserController
   // in the chooser.
   std::vector<std::string> items_;
 
-  base::ScopedObservation<HidChooserContext,
-                          HidChooserContext::DeviceObserver,
-                          &HidChooserContext::AddDeviceObserver,
-                          &HidChooserContext::RemoveDeviceObserver>
+  base::ScopedObservation<HidChooserContext, HidChooserContext::DeviceObserver>
       observation_{this};
 
   base::WeakPtr<ElectronHidDelegate> hid_delegate_;

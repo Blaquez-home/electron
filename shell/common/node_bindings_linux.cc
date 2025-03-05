@@ -10,34 +10,19 @@ namespace electron {
 
 NodeBindingsLinux::NodeBindingsLinux(BrowserEnvironment browser_env)
     : NodeBindings(browser_env), epoll_(epoll_create(1)) {
-  int backend_fd = uv_backend_fd(uv_loop_);
+  auto* const event_loop = uv_loop();
+
+  int backend_fd = uv_backend_fd(event_loop);
   struct epoll_event ev = {0};
   ev.events = EPOLLIN;
   ev.data.fd = backend_fd;
   epoll_ctl(epoll_, EPOLL_CTL_ADD, backend_fd, &ev);
 }
 
-NodeBindingsLinux::~NodeBindingsLinux() = default;
-
-void NodeBindingsLinux::RunMessageLoop() {
-  // Get notified when libuv's watcher queue changes.
-  uv_loop_->data = this;
-  uv_loop_->on_watcher_queue_updated = OnWatcherQueueChanged;
-
-  NodeBindings::RunMessageLoop();
-}
-
-// static
-void NodeBindingsLinux::OnWatcherQueueChanged(uv_loop_t* loop) {
-  NodeBindingsLinux* self = static_cast<NodeBindingsLinux*>(loop->data);
-
-  // We need to break the io polling in the epoll thread when loop's watcher
-  // queue changes, otherwise new events cannot be notified.
-  self->WakeupEmbedThread();
-}
-
 void NodeBindingsLinux::PollEvents() {
-  int timeout = uv_backend_timeout(uv_loop_);
+  auto* const event_loop = uv_loop();
+
+  int timeout = uv_backend_timeout(event_loop);
 
   // Wait for new libuv events.
   int r;
@@ -48,8 +33,8 @@ void NodeBindingsLinux::PollEvents() {
 }
 
 // static
-NodeBindings* NodeBindings::Create(BrowserEnvironment browser_env) {
-  return new NodeBindingsLinux(browser_env);
+std::unique_ptr<NodeBindings> NodeBindings::Create(BrowserEnvironment env) {
+  return std::make_unique<NodeBindingsLinux>(env);
 }
 
 }  // namespace electron

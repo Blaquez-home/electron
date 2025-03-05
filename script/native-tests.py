@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-
-from __future__ import print_function
+#!/usr/bin/env python3
 
 import argparse
 import os
@@ -67,19 +65,19 @@ def parse_args():
   # 'config' must exist and be a file.
   args.config = os.path.abspath(args.config)
   if not os.path.isfile(args.config):
-    parser.error("file '{}' doesn't exist".format(args.config))
+    parser.error(f"file '{args.config}' doesn't exist")
 
   # 'tests_dir' must exist and be a directory.
   if args.tests_dir is not None:
     args.tests_dir = os.path.abspath(args.tests_dir)
     if not os.path.isdir(args.tests_dir):
-      parser.error("directory '{}' doesn't exist".format(args.tests_dir))
+      parser.error(f"directory '{args.tests_dir}' doesn't exist")
 
   # 'output_dir' must exist and be a directory.
   if args.output_dir is not None:
     args.output_dir = os.path.abspath(args.output_dir)
     if not os.path.isdir(args.output_dir):
-      parser.error("directory '{}' doesn't exist".format(args.output_dir))
+      parser.error(f"directory '{args.output_dir}' doesn't exist")
 
   return args
 
@@ -97,11 +95,11 @@ def main():
     if args.binary is not None:
       return tests_list.run(args.binary, args.output_dir, args.verbosity,
                             args.disabled_tests_policy)
-    else:
-      return tests_list.run_all(args.output_dir, args.verbosity,
-                                args.disabled_tests_policy)
 
-  assert False, "unexpected command '{}'".format(args.command)
+    return tests_list.run_all(args.output_dir, args.verbosity,
+                              args.disabled_tests_policy)
+
+  raise AssertionError(f"unexpected command '{args.command}'")
 
 
 if __name__ == '__main__':

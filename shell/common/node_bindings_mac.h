@@ -5,7 +5,6 @@
 #ifndef ELECTRON_SHELL_COMMON_NODE_BINDINGS_MAC_H_
 #define ELECTRON_SHELL_COMMON_NODE_BINDINGS_MAC_H_
 
-#include "base/compiler_specific.h"
 #include "shell/common/node_bindings.h"
 
 namespace electron {
@@ -13,14 +12,9 @@ namespace electron {
 class NodeBindingsMac : public NodeBindings {
  public:
   explicit NodeBindingsMac(BrowserEnvironment browser_env);
-  ~NodeBindingsMac() override;
-
-  void RunMessageLoop() override;
 
  private:
-  // Called when uv's watcher queue changes.
-  static void OnWatcherQueueChanged(uv_loop_t* loop);
-
+  // NodeBindings
   void PollEvents() override;
 };
 

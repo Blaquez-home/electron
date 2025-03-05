@@ -1,23 +1,21 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from __future__ import print_function
 import json
 import os
 import sys
-import urllib2
+from urllib.request import Request, urlopen
 
 sys.path.append(
   os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + "/../.."))
 
-from lib.config import s3_config
-from lib.util import s3put, scoped_cwd, safe_mkdir, get_out_dir, ELECTRON_DIR
+from lib.util import store_artifact, scoped_cwd, safe_mkdir, get_out_dir, \
+  ELECTRON_DIR
 
 OUT_DIR     = get_out_dir()
 
 BASE_URL = 'https://electron-metadumper.herokuapp.com/?version='
 
-version = sys.argv[1]
-authToken = os.getenv('META_DUMPER_AUTH_HEADER')
+AUTH_TOKEN = os.getenv('META_DUMPER_AUTH_HEADER')
 
 def is_json(myjson):
   try:
@@ -26,43 +24,55 @@ def is_json(myjson):
     return False
   return True
 
-def get_content(retry_count = 5):
-  try:
-    request = urllib2.Request(
-      BASE_URL + version,
-      headers={"Authorization" : authToken}
-    )
+def get_content(version, retry_count=5):
+  for attempt in range(retry_count):
+    try:
+      request = Request(
+        BASE_URL + version,
+        headers={"Authorization": AUTH_TOKEN}
+      )
 
-    proposed_content = urllib2.urlopen(
-      request
-    ).read()
+      with urlopen(request) as resp:
+        proposed_content = resp.read()
 
-    if is_json(proposed_content):
-      return proposed_content
-    print("bad attempt")
-    raise Exception("Failed to fetch valid JSON from the metadumper service")
-  except Exception as e:
-    if retry_count == 0:
-      raise e
-    return get_content(retry_count - 1)
+      if is_json(proposed_content):
+        return proposed_content
+
+      print("Received content is not valid JSON.")
+      if attempt == retry_count - 1:
+        return None
+
+    except Exception as e:
+      print(f"Attempt {attempt + 1} failed: {e}")
+      if attempt == retry_count - 1:
+        return None
+
+    if attempt < retry_count - 1:
+      print("Retrying...")
+
+  return None
 
 def main():
-  if not authToken or authToken == "":
+  if not AUTH_TOKEN or AUTH_TOKEN == "":
     raise Exception("Please set META_DUMPER_AUTH_HEADER")
-  # Upload the index.json.
+
+  if len(sys.argv) < 2 or not sys.argv[1]:
+    raise Exception("Version is required")
+
+  version = sys.argv[1]
+
   with scoped_cwd(ELECTRON_DIR):
     safe_mkdir(OUT_DIR)
     index_json = os.path.relpath(os.path.join(OUT_DIR, 'index.json'))
+    new_content = get_content(version)
 
-    new_content = get_content()
+    if new_content is None:
+      raise Exception("Failed to fetch valid JSON after maximum retries.")
 
-    with open(index_json, "w") as f:
+    with open(index_json, "wb") as f:
       f.write(new_content)
 
-    bucket, access_key, secret_key = s3_config()
-    s3put(bucket, access_key, secret_key, OUT_DIR, 'atom-shell/dist',
-          [index_json])
-
+    store_artifact(OUT_DIR, 'headers/dist', [index_json])
 
 if __name__ == '__main__':
   sys.exit(main())

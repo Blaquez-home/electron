@@ -2,11 +2,15 @@
 // Use of this source code is governed by the MIT license that can be
 // found in the LICENSE file.
 
+// FIXME(samuelmaddock): refactor this class to use modern
+// Microsoft::WRL::ComPtr must come before other includes. fixes bad #defines
+// from <shlwapi.h>.
+#include "base/win/shlwapi.h"  // NOLINT(build/include_order)
+
 #include "shell/browser/ui/win/jump_list.h"
 
 #include <propkey.h>  // for PKEY_* constants
 
-#include "base/cxx17_backports.h"
 #include "base/logging.h"
 #include "base/win/scoped_co_mem.h"
 #include "base/win/scoped_propvariant.h"
@@ -66,7 +70,7 @@ bool AppendFile(const JumpListItem& item, IObjectCollection* collection) {
   DCHECK(collection);
 
   CComPtr<IShellItem> file;
-  if (SUCCEEDED(SHCreateItemFromParsingName(item.path.value().c_str(), NULL,
+  if (SUCCEEDED(SHCreateItemFromParsingName(item.path.value().c_str(), nullptr,
                                             IID_PPV_ARGS(&file))))
     return SUCCEEDED(collection->AddObject(file));
 
@@ -93,7 +97,7 @@ bool ConvertShellLinkToJumpListItem(IShellLink* shell_link,
 
   item->type = JumpListItem::Type::kTask;
   wchar_t path[MAX_PATH];
-  if (FAILED(shell_link->GetPath(path, base::size(path), nullptr, 0)))
+  if (FAILED(shell_link->GetPath(path, std::size(path), nullptr, 0)))
     return false;
 
   item->path = base::FilePath(path);
@@ -111,18 +115,18 @@ bool ConvertShellLinkToJumpListItem(IShellLink* shell_link,
     item->title = prop.get().pwszVal;
   }
 
-  if (SUCCEEDED(shell_link->GetWorkingDirectory(path, base::size(path))))
+  if (SUCCEEDED(shell_link->GetWorkingDirectory(path, std::size(path))))
     item->working_dir = base::FilePath(path);
 
   int icon_index;
   if (SUCCEEDED(
-          shell_link->GetIconLocation(path, base::size(path), &icon_index))) {
+          shell_link->GetIconLocation(path, std::size(path), &icon_index))) {
     item->icon_path = base::FilePath(path);
     item->icon_index = icon_index;
   }
 
   wchar_t item_desc[INFOTIPSIZE];
-  if (SUCCEEDED(shell_link->GetDescription(item_desc, base::size(item_desc))))
+  if (SUCCEEDED(shell_link->GetDescription(item_desc, std::size(item_desc))))
     item->description = item_desc;
 
   return true;
@@ -254,8 +258,8 @@ JumpListResult JumpList::AppendCategory(const JumpListCategory& category) {
           if (AppendSeparator(collection))
             ++appended_count;
         } else {
-          LOG(ERROR) << "Can't append separator to Jump List category "
-                     << "'" << category.name << "'. "
+          LOG(ERROR) << "Can't append separator to Jump List category " << "'"
+                     << category.name << "'. "
                      << "Separators are only allowed in the standard 'Tasks' "
                         "Jump List category.";
           result = JumpListResult::kCustomCategorySeparatorError;
@@ -293,18 +297,18 @@ JumpListResult JumpList::AppendCategory(const JumpListCategory& category) {
     HRESULT hr = destinations_->AppendCategory(category.name.c_str(), items);
     if (FAILED(hr)) {
       if (hr == static_cast<HRESULT>(0x80040F03)) {
-        LOG(ERROR) << "Failed to append custom category "
-                   << "'" << category.name << "' "
+        LOG(ERROR) << "Failed to append custom category " << "'"
+                   << category.name << "' "
                    << "to Jump List due to missing file type registration.";
         result = JumpListResult::kMissingFileTypeRegistrationError;
       } else if (hr == E_ACCESSDENIED) {
-        LOG(ERROR) << "Failed to append custom category "
-                   << "'" << category.name << "' "
+        LOG(ERROR) << "Failed to append custom category " << "'"
+                   << category.name << "' "
                    << "to Jump List due to system privacy settings.";
         result = JumpListResult::kCustomCategoryAccessDeniedError;
       } else {
-        LOG(ERROR) << "Failed to append custom category "
-                   << "'" << category.name << "' to Jump List.";
+        LOG(ERROR) << "Failed to append custom category " << "'"
+                   << category.name << "' to Jump List.";
         if (result == JumpListResult::kSuccess)
           result = JumpListResult::kGenericError;
       }
